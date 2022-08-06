@@ -31,9 +31,9 @@ def get_config_map():
 
 
 class FileHandler(BaseHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, config_map, *args, **kwargs):
         logging.info('init...\n')
-        self.request_path_to_relative_path = get_config_map()
+        self.request_path_to_relative_path = config_map
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def _set_status(self, status_code):
@@ -58,7 +58,9 @@ class FileHandler(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, port=8080):
     logging.basicConfig(level=logging.INFO)
     server_address = ('', port)
-    httpd = server_class(server_address, FileHandler)
+    def handler(*args):
+        FileHandler(get_config_map(), *args)
+    httpd = server_class(server_address, handler)
     logging.info('Starting httpd... [port={}]\n'.format(port))
     try:
         httpd.serve_forever()
