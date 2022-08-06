@@ -8,12 +8,32 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import os
 
+def get_config_map():
+    mapping = {}
+    with open(os.path.join(os.getcwd(), 'mapping.cfg'), 'r') as f:
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            if line.startswith('#'):
+                continue
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            request_path = line;
+            line = f.readline()
+            if not line:
+                break
+            response_file_path = line.strip()
+            mapping[request_path] = response_file_path
+    return mapping
+
+
+
 class FileHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         logging.info('init...\n')
-        self.request_path_to_relative_path = {
-            "/hello": "sample.txt"
-        }
+        self.request_path_to_relative_path = get_config_map()
         BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def _set_status(self, status_code):
@@ -39,7 +59,7 @@ def run(server_class=HTTPServer, port=8080):
     logging.basicConfig(level=logging.INFO)
     server_address = ('', port)
     httpd = server_class(server_address, FileHandler)
-    logging.info('Starting httpd...\n')
+    logging.info('Starting httpd... [port={}]\n'.format(port))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
